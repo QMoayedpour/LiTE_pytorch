@@ -17,7 +17,7 @@ class LITE(nn.Module):
         self.output_directory = output_directory
         self.dilatation_rate = dilatation_rate
 
-        self.inception = InceptionModule(input_channels=1, n_filters=self.n_filters, dilation_rate=1, use_hybird_layer=self.use_custom_filters, device=device)
+        self.inception = InceptionModule(input_channels=1, n_filters=self.n_filters, dilation_rate=1, use_hybrid_layer=self.use_custom_filters, device=device)
         self.inception.to(device)
 
         self.fcn_modules = nn.ModuleList()

@@ -2,14 +2,14 @@ import torch
 import torch.nn as nn
 import numpy as np
 
-class HybirdLayer(nn.Module):
+class HybridLayer(nn.Module):
     """Layer création de layer "imposé"
 
     Args:
         nn (_type_): _description_
     """
     def __init__(self, input_channels, kernel_sizes=[2, 4, 8, 16, 32, 64], device="cpu"):
-        super(HybirdLayer, self).__init__()
+        super(HybridLayer, self).__init__()
         self.input_channels = input_channels
         self.kernel_sizes = kernel_sizes
         self.conv_layers = nn.ModuleList()
