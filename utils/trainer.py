@@ -52,7 +52,6 @@ def train_model(
         epoch_loss = running_loss / len(train_loader.dataset)
         pbar_epoch.set_postfix({"epoch_loss": epoch_loss})
 
-        # Test the model every 'test_interval' epochs
         if (epoch + 1) % test_interval == 0:
             model.eval()
             correct = 0
