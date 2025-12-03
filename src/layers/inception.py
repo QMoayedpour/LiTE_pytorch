@@ -2,15 +2,27 @@ import torch
 import torch.nn as nn
 from .hybrid_layer import HybridLayer
 
+
 class InceptionModule(nn.Module):
-    def __init__(self, input_channels, n_filters, dilation_rate, stride=1, kernel_size=41, activation="linear", use_hybird_layer=False, use_multiplexing=True, device="cpu"):
+    def __init__(
+        self,
+        input_channels,
+        n_filters,
+        dilation_rate,
+        stride=1,
+        kernel_size=41,
+        activation="linear",
+        use_hybrid_layer=False,
+        use_multiplexing=True,
+        device="cpu",
+    ):
         super(InceptionModule, self).__init__()
         self.n_filters = n_filters
         self.dilation_rate = dilation_rate
         self.stride = stride
         self.kernel_size = kernel_size
         self.activation = activation
-        self.use_hybird_layer = use_hybird_layer
+        self.use_hybrid_layer = use_hybrid_layer
         self.use_multiplexing = use_multiplexing
         self.device = device
 
@@ -20,15 +32,23 @@ class InceptionModule(nn.Module):
         else:
             self.n_convs = 3
 
-        self.kernel_size_s = [self.kernel_size // (2 ** i) for i in range(self.n_convs)]
+        self.kernel_size_s = [self.kernel_size // (2**i) for i in range(self.n_convs)]
         self.conv_list = nn.ModuleList()
 
         for i in range(len(self.kernel_size_s)):
-            conv = nn.Conv1d(input_channels, self.n_filters, self.kernel_size_s[i], stride=self.stride, padding="same", dilation=self.dilation_rate, bias=False).to(device)
+            conv = nn.Conv1d(
+                input_channels,
+                self.n_filters,
+                self.kernel_size_s[i],
+                stride=self.stride,
+                padding="same",
+                dilation=self.dilation_rate,
+                bias=False,
+            ).to(device)
             self.conv_list.append(conv)
 
-        if self.use_hybird_layer:
-            n = self.n_filters * self.n_convs +17
+        if self.use_hybrid_layer:
+            n = self.n_filters * self.n_convs + 17
         else:
             n = self.n_filters * self.n_convs
         self.batch_norm = nn.BatchNorm1d(n).to(device)
@@ -36,10 +56,12 @@ class InceptionModule(nn.Module):
 
     def forward(self, input_tensor):
         conv_outputs = [conv(input_tensor) for conv in self.conv_list]
-        if self.use_hybird_layer:
-            self.hybird = HybridLayer(input_channels=input_tensor.shape[1], device = self.device).to(self.device)
-            hybird_output = self.hybird(input_tensor)
-            conv_outputs.append(hybird_output)
+        if self.use_hybrid_layer:
+            self.hybrid = HybridLayer(
+                input_channels=input_tensor.shape[1], device=self.device
+            ).to(self.device)
+            hybrid_output = self.hybrid(input_tensor)
+            conv_outputs.append(hybrid_output)
         if len(conv_outputs) > 1:
             concatenated = torch.cat(conv_outputs, dim=1)
         else:

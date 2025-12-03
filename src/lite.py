@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
-from layers.fcn_module import FCNModule
-from layers.inception import InceptionModule
+from .layers.fcn_module import FCNModule
+from .layers.inception import InceptionModule
 
 
 class LITE(nn.Module):

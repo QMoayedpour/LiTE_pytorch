@@ -1,7 +1,6 @@
 import numpy as np
 import os
 from sklearn.preprocessing import LabelEncoder, MinMaxScaler, StandardScaler
-from sklearn.model_selection import train_test_split
 import torch
 from torch.utils.data import Dataset
 import matplotlib.pyplot as plt
@@ -9,14 +8,12 @@ import pandas as pd
 
 
 def create_directory(directory_path):
-
     if not os.path.isdir(directory_path):
         os.mkdir(directory_path)
 
 
 def plot_from_dict(dictionnary, mode="windows"):
-
-    keys_to_exclude = {'n_anomaly', 'n_data', 'model', 'Accuracy'}
+    keys_to_exclude = {"n_anomaly", "n_data", "model", "Accuracy"}
 
     datasets = list(dictionnary.keys())
     metrics = [k for k in dictionnary[datasets[0]].keys() if k not in keys_to_exclude]
@@ -25,33 +22,34 @@ def plot_from_dict(dictionnary, mode="windows"):
 
     for i, metric in enumerate(metrics):
         metric_values = [dictionnary[ds][metric] for ds in datasets]
-        ax.plot([i] * len(datasets), metric_values, 'o', label=metric, c='red', alpha=0.5)
+        ax.plot(
+            [i] * len(datasets), metric_values, "o", label=metric, c="red", alpha=0.5
+        )
 
     ax.set_xticks(range(len(metrics)))
-    ax.set_xticklabels(metrics, rotation=45, ha='right')
-    model_name = dictionnary[datasets[0]]['model']
+    ax.set_xticklabels(metrics, rotation=45, ha="right")
+    model_name = dictionnary[datasets[0]]["model"]
     plt.title(f"Metrics for anomaly per {mode}, model pre-trained : {model_name}")
     plt.tight_layout()
     plt.show()
 
 
 def load_data(file_name, folder_path="./data/"):
-
     if folder_path:
         path = folder_path
     else:
         path = ""
     path += file_name + "/"
 
-    train_path = path + file_name + "_TRAIN"
-    test_path = path + file_name + "_TEST"
+    train_path = path + file_name + "_TRAIN.txt"
+    test_path = path + file_name + "_TEST.txt"
 
     if os.path.exists(test_path) <= 0:
         print("File not found")
         return None, None, None, None
 
-    train = np.loadtxt(train_path, delimiter=',', dtype=np.float64)
-    test = np.loadtxt(test_path, delimiter=',', dtype=np.float64)
+    train = np.loadtxt(train_path, delimiter=",", dtype=np.float64)
+    test = np.loadtxt(test_path, delimiter=",", dtype=np.float64)
 
     ytrain = train[:, 0]
     ytest = test[:, 0]
@@ -63,7 +61,6 @@ def load_data(file_name, folder_path="./data/"):
 
 
 def znormalisation(x):
-
     stds = np.std(x, axis=1, keepdims=True)
     if len(stds[stds == 0.0]) > 0:
         stds[stds == 0.0] = 1.0
@@ -72,54 +69,14 @@ def znormalisation(x):
 
 
 def encode_labels(y):
-
     labenc = LabelEncoder()
 
     return labenc.fit_transform(y)
 
 
-def split_anomaly(data_anomaly, length_TS, test_size=0.5, random_state=42, stride=1):
-    X_large = data_anomaly.value.to_numpy()
-    y_large = data_anomaly.label.to_numpy()
-
-    X = []
-    y = []
-    y_mask = []
-    for i in range(0, len(X_large) - length_TS, stride):
-        X.append(X_large[i:i+length_TS])
-        y.append(y_large[i:i+length_TS])
-        y_mask.append(int(y_large[i:i+length_TS].sum()))
-    X = np.stack(X, axis=0)
-    y = np.stack(y, axis=0)
-    y_mask = np.stack(y_mask, axis=0)
-
-    # Split data
-
-    scaler = MinMaxScaler()
-    X_shape = X.shape
-    X = scaler.fit_transform(X.reshape(-1, X_shape[-1])).reshape(X_shape)
-
-    X_train, X_test, y_train, y_test, y_train_mask, y_test_mask = train_test_split(
-        X, y, y_mask, test_size=test_size, random_state=random_state
-    )
-    class_to_keep, class_to_remove = 0,  1
-
-    mask_train = y_train_mask == class_to_keep
-    mask_train_remove = y_train_mask >= class_to_remove
-
-    X_train_healthy = X_train[mask_train]
-    y_train_healthy = y_train[mask_train]
-
-    X_train_anomaly = X_train[mask_train_remove]
-    y_train_anomaly = y_train[mask_train_remove]
-
-    return (X_train_healthy, y_train_healthy, np.concatenate((X_train_anomaly, X_test), axis=0),
-            np.concatenate((y_train_anomaly, y_test), axis=0))
-
-
 def get_mean_col(df):
-    moyennes = df.select_dtypes(include='float').mean()
-    df.loc['Moyenne'] = moyennes
+    moyennes = df.select_dtypes(include="float").mean()
+    df.loc["Moyenne"] = moyennes
     df["model"].iloc[-1] = df["model"].iloc[-2]
     return df
 
@@ -137,8 +94,8 @@ def concat_df_on_mean(dataframes):
     moyenne_rows = []
 
     for df in dataframes:
-        if 'Moyenne' in df.index:
-            moyenne_row = df.loc['Moyenne']
+        if "Moyenne" in df.index:
+            moyenne_row = df.loc["Moyenne"]
             moyenne_rows.append(moyenne_row)
 
     combined_df = pd.DataFrame(moyenne_rows)
@@ -148,7 +105,7 @@ def concat_df_on_mean(dataframes):
 
 
 class TimeDataset(Dataset):
-    def __init__(self, x, y, device='cpu'):
+    def __init__(self, x, y, device="cpu"):
         self.x = x
         self.y = y
         self.device = device
@@ -175,15 +132,27 @@ class SimpleDataset(Dataset):
         return len(self.X) - self.seq_len
 
     def __getitem__(self, idx):
-        return (torch.tensor(self.X[idx], dtype=torch.float).to(self.device),
-                torch.tensor(self.y[idx], dtype=torch.int).to(self.device))
+        return (
+            torch.tensor(self.X[idx], dtype=torch.float).to(self.device),
+            torch.tensor(self.y[idx], dtype=torch.long).to(self.device),
+        )
 
 
 class ETTDataset(torch.utils.data.Dataset):
-    def __init__(self, x, mode="train", univariate=True, scale=True, seq_len=336, target_window=96,
-                 split_ratios=[0.6, 0.2, 0.2]):
+    def __init__(
+        self,
+        x,
+        mode="train",
+        univariate=True,
+        scale=True,
+        seq_len=336,
+        target_window=96,
+        split_ratios=[0.6, 0.2, 0.2],
+    ):
         super().__init__()
-        assert sum(split_ratios) == 1, "Les proportions doivent avoir une somme égale à 1"
+        assert sum(split_ratios) == 1, (
+            "Les proportions doivent avoir une somme égale à 1"
+        )
 
         # if univariate:
         #    x_y = df.iloc[:, 1]
@@ -191,8 +160,8 @@ class ETTDataset(torch.utils.data.Dataset):
         #    x_y = df.iloc[:, 1:]
         # time_stamp = df.iloc[:, 0]
 
-        assert mode in ['train', 'test', 'val']
-        type_map = {'train': 0, 'val': 1, 'test': 2}
+        assert mode in ["train", "test", "val"]
+        type_map = {"train": 0, "val": 1, "test": 2}
         self.set_type = type_map[mode]
 
         self.seq_len = seq_len
@@ -209,7 +178,7 @@ class ETTDataset(torch.utils.data.Dataset):
         border2 = border2s[self.set_type]
 
         if scale:
-            train_x = x[border1s[0]: border2s[0]]
+            train_x = x[border1s[0] : border2s[0]]
             self.ss = StandardScaler()
             if univariate:
                 train_x = train_x.reshape(-1, 1)
@@ -222,8 +191,8 @@ class ETTDataset(torch.utils.data.Dataset):
             else:
                 x_y = train_x
         # time_stamp = time_stamp.to_numpy()
-        self.data_x = x_y[0: border2 - border1, :].astype(np.float32)
-        self.data_y = x_y[0: border2 - border1, -1].astype(np.float32)
+        self.data_x = x_y[0 : border2 - border1, :].astype(np.float32)
+        self.data_y = x_y[0 : border2 - border1, -1].astype(np.float32)
         # self.data_stamp = time_stamp[border1: border2]
 
     def __getitem__(self, index):
@@ -244,10 +213,23 @@ class ETTDataset(torch.utils.data.Dataset):
 
 
 class MultiDataset(Dataset):
-    def __init__(self, series_list, mode="train", univariate=True, scale=True, seq_len=336, target_window=96, split_ratios=[0.6, 0.2, 0.2]):
+    def __init__(
+        self,
+        series_list,
+        mode="train",
+        univariate=True,
+        scale=True,
+        seq_len=336,
+        target_window=96,
+        split_ratios=[0.6, 0.2, 0.2],
+    ):
         super().__init__()
-        assert sum(split_ratios) == 1, "Les proportions doivent avoir une somme égale à 1"
-        assert mode in ['train', 'test', 'val'], "Mode doit être 'train', 'test' ou 'val'"
+        assert sum(split_ratios) == 1, (
+            "Les proportions doivent avoir une somme égale à 1"
+        )
+        assert mode in ["train", "test", "val"], (
+            "Mode doit être 'train', 'test' ou 'val'"
+        )
 
         self.seq_len = seq_len
         self.pred_len = target_window
@@ -270,12 +252,12 @@ class MultiDataset(Dataset):
         val_size = int(n * split_ratios[1])
         test_size = n - train_size - val_size
 
-        if self.mode == 'train':
+        if self.mode == "train":
             data_x = x[:train_size]
-        elif self.mode == 'val':
-            data_x = x[train_size:train_size + val_size]
+        elif self.mode == "val":
+            data_x = x[train_size : train_size + val_size]
         else:  # self.mode == 'test'
-            data_x = x[train_size + val_size:]
+            data_x = x[train_size + val_size :]
 
         if self.scale:
             ss = StandardScaler()
