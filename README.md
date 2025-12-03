@@ -10,8 +10,7 @@ This repo provides a PyTorch implementation of LiTE and simple training/inferenc
    cd /Users/quentinpour/python/LiTE_pytorch
    python3 -m venv .venv
    source .venv/bin/activate
-   pip install --upgrade pip
-   pip install torch numpy scikit-learn tqdm matplotlib pandas
+   pip install -e .          # or: pip install -r requirements.txt
    ```
 2) Train on the provided dataset  
    ```bash

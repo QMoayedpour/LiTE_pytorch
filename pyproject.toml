@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lite-pytorch"
+version = "0.1.0"
+description = "LiTE: Lightweight Inception Time for time series (PyTorch implementation)"
+readme = "README.md"
+requires-python = ">=3.8"
+authors = [
+  { name = "Quentin", email = "you@example.com" }
+]
+dependencies = [
+  "torch",
+  "numpy",
+  "scikit-learn",
+  "tqdm",
+  "matplotlib",
+  "pandas",
+]
+
+[project.urls]
+Homepage = "https://maxime-devanne.com/delegation/publis/ismail-fawaz_dsaa2023.pdf"
+Repository = "https://example.com/lite-pytorch"
+
+[tool.setuptools.packages.find]
+include = ["src", "src.*", "utils", "utils.*"]
+
